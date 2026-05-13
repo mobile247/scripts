@@ -1,0 +1,6 @@
+.env
+.DS_Store
+
+# Local-only scripts (contain internal infrastructure details)
+bash/provision-ssh-user.sh
+bash/provision-ssh-user.md
