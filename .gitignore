@@ -1,5 +1,7 @@
 .env
 .DS_Store
+__pycache__/
+python/out/
 
 # Local-only scripts (contain internal infrastructure details)
 bash/provision-ssh-user.sh

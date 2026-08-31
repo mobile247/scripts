@@ -1,0 +1,6 @@
+beautifulsoup4==4.15.0
+ebooklib==0.20
+lxml==6.1.2
+six==1.17.0
+soupsieve==2.9.2
+typing-extensions==4.16.0
