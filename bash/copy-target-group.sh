@@ -133,28 +133,31 @@ echo "  Target Type: $TARGET_TYPE"
 
 # Create new target group
 echo "Creating new target group '$NEW_TG_NAME'..."
-CREATE_CMD="aws elbv2 create-target-group \
-    --name '$NEW_TG_NAME' \
-    --protocol '$PROTOCOL' \
-    --port $PORT \
-    --vpc-id '$FINAL_VPC_ID' \
-    --target-type '$TARGET_TYPE'"
+# Build args as an array (no eval) so values from the AWS API or CLI can't break quoting
+CREATE_ARGS=(
+    --name "$NEW_TG_NAME"
+    --protocol "$PROTOCOL"
+    --port "$PORT"
+    --vpc-id "$FINAL_VPC_ID"
+    --target-type "$TARGET_TYPE"
+)
 
 # Add health check parameters
 if [[ "$HEALTH_CHECK_PATH" != "null" && "$HEALTH_CHECK_PATH" != "" ]]; then
-    CREATE_CMD="$CREATE_CMD --health-check-path '$HEALTH_CHECK_PATH'"
+    CREATE_ARGS+=(--health-check-path "$HEALTH_CHECK_PATH")
 fi
 
-CREATE_CMD="$CREATE_CMD \
-    --health-check-protocol '$HEALTH_CHECK_PROTOCOL' \
-    --health-check-port '$HEALTH_CHECK_PORT' \
-    --health-check-interval-seconds $HEALTH_CHECK_INTERVAL \
-    --health-check-timeout-seconds $HEALTH_CHECK_TIMEOUT \
-    --healthy-threshold-count $HEALTHY_THRESHOLD \
-    --unhealthy-threshold-count $UNHEALTHY_THRESHOLD"
+CREATE_ARGS+=(
+    --health-check-protocol "$HEALTH_CHECK_PROTOCOL"
+    --health-check-port "$HEALTH_CHECK_PORT"
+    --health-check-interval-seconds "$HEALTH_CHECK_INTERVAL"
+    --health-check-timeout-seconds "$HEALTH_CHECK_TIMEOUT"
+    --healthy-threshold-count "$HEALTHY_THRESHOLD"
+    --unhealthy-threshold-count "$UNHEALTHY_THRESHOLD"
+)
 
 # Execute the create command
-NEW_TG_ARN=$(eval "$CREATE_CMD" --query 'TargetGroups[0].TargetGroupArn' --output text)
+NEW_TG_ARN=$(aws elbv2 create-target-group "${CREATE_ARGS[@]}" --query 'TargetGroups[0].TargetGroupArn' --output text)
 
 if [[ -z "$NEW_TG_ARN" || "$NEW_TG_ARN" == "None" ]]; then
     echo "Error: Failed to create new target group"

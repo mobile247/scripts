@@ -43,9 +43,9 @@ echo "Time elapsed: ${ELAPSED}s"
 if [[ -n "${NTFY_TOPIC:-}" ]]; then
   MSG="freeze-pyenv-packages: ${RESULT} (${ELAPSED}s)"
   if command -v curl &>/dev/null; then
-    curl -s -H "Title: Script Done" -d "$MSG" "ntfy.sh/${NTFY_TOPIC}" >/dev/null || true
+    curl -s -H "Title: Script Done" -d "$MSG" "https://ntfy.sh/${NTFY_TOPIC}" >/dev/null || true
   elif command -v wget &>/dev/null; then
-    wget -qO- --post-data="$MSG" --header="Title: Script Done" "ntfy.sh/${NTFY_TOPIC}" >/dev/null || true
+    wget -qO- --post-data="$MSG" --header="Title: Script Done" "https://ntfy.sh/${NTFY_TOPIC}" >/dev/null || true
   fi
 fi
 

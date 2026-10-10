@@ -73,7 +73,7 @@ fi
 
 # Load environment variables
 if [ -f .env ]; then
-  export $(grep -v '^#' .env | xargs)
+  set -a; source .env; set +a
   echo "Loaded configuration from .env file"
 else
   echo "No .env file found, using environment variables"

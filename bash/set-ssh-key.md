@@ -84,5 +84,9 @@ Loaded from `.env` in the current working directory if present, otherwise read f
 
 - No credentials or key material are stored on disk locally
 - Full key line is base64-encoded before passing over SSH to avoid shell quoting issues with options like `permitopen="*:*"`
+- Key is validated locally before connecting: must be a single line and parseable by `ssh-keygen -l`. `--user` must match `^[A-Za-z0-9._][A-Za-z0-9._-]*$`.
+- The key is passed to the remote host base64-encoded and decoded there — it is never embedded raw in the remote shell script, so a malicious key comment (e.g. `$(...)`) cannot execute. Keys received from third parties are safe to pass.
+- Notifications are sent over HTTPS.
+- The key blob (also embedded remotely, for matching) must contain only base64 characters.
 - Backup created before any modification — never destructive
 - `authorized_keys` permissions set to `600` after write

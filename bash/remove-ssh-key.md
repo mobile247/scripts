@@ -53,7 +53,7 @@ Remove a public SSH key from `authorized_keys` for a specified user on a remote 
 
 ## Behavior
 
-1. Resolves `--key` to a key string (reads file if path given; validates format).
+1. Resolves `--key` to a key string (reads file if path given; validates with `ssh-keygen -l`).
 2. SSHes to `--host`.
 3. Checks if `authorized_keys` exists. If not, exits cleanly.
 4. Checks if the key is present (`grep -qF`). If not, exits cleanly.
@@ -78,5 +78,7 @@ Loaded from `.env` in the current working directory if present, otherwise read f
 
 - Backup is created before any destructive write — recovery is always possible.
 - `sudo cp` / `sudo tee` used instead of `sudo bash -c 'echo ... >'` to avoid shell injection.
-- Key format is validated locally before any remote connection.
+- Key is validated locally before connecting: must be a single line and parseable by `ssh-keygen -l`. `--user` must match `^[A-Za-z0-9._][A-Za-z0-9._-]*$`.
+- The key is passed to the remote host base64-encoded and decoded there — it is never embedded raw in the remote shell script, so a malicious key comment (e.g. `$(...)`) cannot execute. Keys received from third parties are safe to pass.
+- Notifications are sent over HTTPS.
 - `grep -vF` (fixed string) prevents regex injection from malformed key strings.

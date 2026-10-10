@@ -48,7 +48,7 @@ send_notification() {
             -H "Title: $title" \
             -H "Priority: $priority" \
             -d "$message" \
-            "ntfy.sh/$NTFY_TOPIC" 2>/dev/null || true
+            "https://ntfy.sh/$NTFY_TOPIC" 2>/dev/null || true
     fi
 }
 

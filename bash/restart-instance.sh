@@ -16,9 +16,9 @@ send_notification() {
     if [[ -n "${NTFY_TOPIC}" ]]; then
         # Check if curl is available, otherwise use wget
         if command -v curl &> /dev/null; then
-            curl -H "Title: ${title}" -d "${message}" "ntfy.sh/${NTFY_TOPIC}" 2>/dev/null || true
+            curl -H "Title: ${title}" -d "${message}" "https://ntfy.sh/${NTFY_TOPIC}" 2>/dev/null || true
         elif command -v wget &> /dev/null; then
-            wget -qO- --header="Title: ${title}" --post-data="${message}" "ntfy.sh/${NTFY_TOPIC}" 2>/dev/null || true
+            wget -qO- --header="Title: ${title}" --post-data="${message}" "https://ntfy.sh/${NTFY_TOPIC}" 2>/dev/null || true
         fi
     fi
 }

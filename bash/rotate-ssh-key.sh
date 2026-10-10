@@ -30,9 +30,9 @@ send_notification() {
     local title="$2"
     if [ -n "${NTFY_TOPIC:-}" ]; then
         if command -v curl &>/dev/null; then
-            curl -s -H "Title: ${title}" -d "${message}" "ntfy.sh/${NTFY_TOPIC}" || true
+            curl -s -H "Title: ${title}" -d "${message}" "https://ntfy.sh/${NTFY_TOPIC}" || true
         elif command -v wget &>/dev/null; then
-            wget -qO- --header="Title: ${title}" --post-data="${message}" "ntfy.sh/${NTFY_TOPIC}" || true
+            wget -qO- --header="Title: ${title}" --post-data="${message}" "https://ntfy.sh/${NTFY_TOPIC}" || true
         fi
     fi
 }

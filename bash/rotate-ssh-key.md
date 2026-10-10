@@ -76,3 +76,4 @@ Loaded from `.env` in the current working directory if present, otherwise read f
 - The old key is removed before the new key is added. There is a brief window per host where neither key exists in `authorized_keys`. Ensure the user is not actively connected during rotation if continuity is required.
 - `remove-ssh-key.sh` creates a timestamped backup before modifying `authorized_keys`. Backup location: `~<user>/.ssh/authorized_keys.bak.<timestamp>`.
 - No keys are logged or stored locally beyond what is passed as arguments.
+- Key validation and safe (base64) remote transport are inherited from `remove-ssh-key.sh` / `add-ssh-key.sh`. Requires `ssh-keygen` locally.

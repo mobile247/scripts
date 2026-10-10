@@ -22,9 +22,9 @@ send_notification() {
     local title="$2"
     if [ -n "${NTFY_TOPIC:-}" ]; then
         if command -v curl &>/dev/null; then
-            curl -s -H "Title: ${title}" -d "${message}" "ntfy.sh/${NTFY_TOPIC}" || true
+            curl -s -H "Title: ${title}" -d "${message}" "https://ntfy.sh/${NTFY_TOPIC}" || true
         elif command -v wget &>/dev/null; then
-            wget -qO- --header="Title: ${title}" --post-data="${message}" "ntfy.sh/${NTFY_TOPIC}" || true
+            wget -qO- --header="Title: ${title}" --post-data="${message}" "https://ntfy.sh/${NTFY_TOPIC}" || true
         fi
     fi
 }
@@ -108,6 +108,20 @@ case "$PUBLIC_KEY" in
         ;;
 esac
 
+# The key ends up in a remote shell script, so require a single well-formed key.
+# (ssh-keygen accepts arbitrary comments — the key is also base64-encoded below.)
+[ "$(printf '%s\n' "$PUBLIC_KEY" | wc -l)" -eq 1 ] || die "Key must be a single line"
+printf '%s\n' "$PUBLIC_KEY" | ssh-keygen -l -f - >/dev/null 2>&1 \
+    || die "ssh-keygen could not parse key: ${PUBLIC_KEY:0:40}..."
+
+if [ -n "$REMOTE_USER" ] && ! [[ "$REMOTE_USER" =~ ^[A-Za-z0-9._][A-Za-z0-9._-]*$ ]]; then
+    die "Invalid --user value: ${REMOTE_USER}"
+fi
+
+# Base64 alphabet has no shell metacharacters, so it can be single-quoted safely
+# inside the remote script; the raw key is never embedded.
+KEY_B64=$(printf '%s' "$PUBLIC_KEY" | base64 | tr -d '\n')
+
 # ---------------------------------------------------------------------------
 # Load .env if present
 # ---------------------------------------------------------------------------
@@ -144,7 +158,7 @@ build_remote_script() {
 
     cat <<SCRIPT
 set -e
-KEY="${PUBLIC_KEY}"
+KEY=\$(printf '%s' '${KEY_B64}' | base64 -d)
 AUTH_KEYS="${auth_keys_expr}"
 BACKUP="\${AUTH_KEYS}.bak.\$(date +%s)"
 TMP="\$(mktemp)"
@@ -220,8 +234,8 @@ echo "Time elapsed: ${ELAPSED}s"
 MSG="remove-ssh-key: key removed/verified for ${REMOTE_USER:-ssh-user} on ${SSH_HOST} (${ELAPSED}s)"
 if [ -n "${NTFY_TOPIC:-}" ]; then
     if command -v curl &>/dev/null; then
-        curl -s -H "Title: remove-ssh-key done" -d "$MSG" "ntfy.sh/${NTFY_TOPIC}" || true
+        curl -s -H "Title: remove-ssh-key done" -d "$MSG" "https://ntfy.sh/${NTFY_TOPIC}" || true
     elif command -v wget &>/dev/null; then
-        wget -qO- --header="Title: remove-ssh-key done" --post-data="$MSG" "ntfy.sh/${NTFY_TOPIC}" || true
+        wget -qO- --header="Title: remove-ssh-key done" --post-data="$MSG" "https://ntfy.sh/${NTFY_TOPIC}" || true
     fi
 fi

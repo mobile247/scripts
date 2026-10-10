@@ -23,9 +23,9 @@ send_notification() {
     local title="$2"
     if [ -n "${NTFY_TOPIC:-}" ]; then
         if command -v curl &>/dev/null; then
-            curl -s -H "Title: ${title}" -d "${message}" "ntfy.sh/${NTFY_TOPIC}" || true
+            curl -s -H "Title: ${title}" -d "${message}" "https://ntfy.sh/${NTFY_TOPIC}" || true
         elif command -v wget &>/dev/null; then
-            wget -qO- --header="Title: ${title}" --post-data="${message}" "ntfy.sh/${NTFY_TOPIC}" || true
+            wget -qO- --header="Title: ${title}" --post-data="${message}" "https://ntfy.sh/${NTFY_TOPIC}" || true
         fi
     fi
 }
@@ -114,9 +114,22 @@ KEY_BLOB=$(printf '%s' "$PUBLIC_KEY" | awk '{
 
 [ -n "$KEY_BLOB" ] || die "Cannot extract key blob — does not look like a valid SSH public key: ${PUBLIC_KEY:0:60}..."
 
+# The key ends up in a remote shell script, so require a single well-formed key.
+# (ssh-keygen accepts arbitrary comments — the key is also base64-encoded below.)
+[ "$(printf '%s\n' "$PUBLIC_KEY" | wc -l)" -eq 1 ] || die "Key must be a single line"
+printf '%s\n' "$PUBLIC_KEY" | ssh-keygen -l -f - >/dev/null 2>&1 \
+    || die "ssh-keygen could not parse key: ${PUBLIC_KEY:0:40}..."
+
+if [ -n "$REMOTE_USER" ] && ! [[ "$REMOTE_USER" =~ ^[A-Za-z0-9._][A-Za-z0-9._-]*$ ]]; then
+    die "Invalid --user value: ${REMOTE_USER}"
+fi
+
+# KEY_BLOB is embedded in the remote script; restrict it to the base64 alphabet.
+[[ "$KEY_BLOB" =~ ^[A-Za-z0-9+/]+=*$ ]] || die "Key blob is not valid base64"
+
 # Base64-encode the full key line to safely pass it through SSH without quoting issues.
 # (Options prefix may contain characters like = " * that break shell embedding.)
-KEY_B64=$(printf '%s' "$PUBLIC_KEY" | base64)
+KEY_B64=$(printf '%s' "$PUBLIC_KEY" | base64 | tr -d '\n')
 
 # ---------------------------------------------------------------------------
 # Load .env if present
@@ -161,8 +174,8 @@ build_remote_script() {
 
     cat <<SCRIPT
 set -e
-FULL_KEY=\$(echo "${KEY_B64}" | base64 -d)
-KEY_BLOB="${KEY_BLOB}"
+FULL_KEY=\$(printf '%s' '${KEY_B64}' | base64 -d)
+KEY_BLOB='${KEY_BLOB}'
 AUTH_KEYS="${auth_keys_expr}"
 DRY_RUN="${DRY_RUN}"
 
@@ -333,8 +346,8 @@ echo "Time elapsed: ${ELAPSED}s"
 MSG="set-ssh-key: key set for ${REMOTE_USER:-ssh-user} on ${SSH_HOST} (${ELAPSED}s)"
 if [ -n "${NTFY_TOPIC:-}" ]; then
     if command -v curl &>/dev/null; then
-        curl -s -H "Title: set-ssh-key done" -d "$MSG" "ntfy.sh/${NTFY_TOPIC}" || true
+        curl -s -H "Title: set-ssh-key done" -d "$MSG" "https://ntfy.sh/${NTFY_TOPIC}" || true
     elif command -v wget &>/dev/null; then
-        wget -qO- --header="Title: set-ssh-key done" --post-data="$MSG" "ntfy.sh/${NTFY_TOPIC}" || true
+        wget -qO- --header="Title: set-ssh-key done" --post-data="$MSG" "https://ntfy.sh/${NTFY_TOPIC}" || true
     fi
 fi
