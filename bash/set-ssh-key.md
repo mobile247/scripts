@@ -51,7 +51,7 @@ Matching is done on the **key blob** (base64 field), so options and comments are
 |----------|-------------|
 | `NTFY_TOPIC` | Optional. Send result notification via ntfy.sh |
 
-Loaded from `.env` in the script directory if present.
+Loaded from `.env` in the current working directory if present, otherwise read from the environment.
 
 ---
 

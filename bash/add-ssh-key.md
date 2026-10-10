@@ -81,7 +81,7 @@ With the above, `--host myserver` connects as `ubuntu`. Use `--user deploy` to a
 |----------|-------------|
 | `NTFY_TOPIC` | Optional. Send result notification via ntfy.sh |
 
-Loaded from `.env` in the script directory if present.
+Loaded from `.env` in the current working directory if present, otherwise read from the environment.
 
 ---
 

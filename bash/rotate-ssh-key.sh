@@ -109,9 +109,9 @@ done
 # Load .env if present
 # ---------------------------------------------------------------------------
 
-if [ -f "${SCRIPT_DIR}/.env" ]; then
+if [ -f .env ]; then
     # shellcheck disable=SC1091
-    set -a; source "${SCRIPT_DIR}/.env"; set +a
+    set -a; source .env; set +a
 fi
 
 # ---------------------------------------------------------------------------

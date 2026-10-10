@@ -40,7 +40,7 @@ Rotate an SSH public key for a user across one or more remote hosts. Removes the
 |----------|-------------|
 | `NTFY_TOPIC` | If set, sends a notification on completion or failure |
 
-Loaded from `.env` in the script directory if present.
+Loaded from `.env` in the current working directory if present, otherwise read from the environment.
 
 ---
 

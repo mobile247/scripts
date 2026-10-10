@@ -70,7 +70,7 @@ Remove a public SSH key from `authorized_keys` for a specified user on a remote 
 |----------|-------------|
 | `NTFY_TOPIC` | Optional. Send result notification via ntfy.sh |
 
-Loaded from `.env` in the script directory if present.
+Loaded from `.env` in the current working directory if present, otherwise read from the environment.
 
 ---
 
