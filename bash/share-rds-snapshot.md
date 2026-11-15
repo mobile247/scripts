@@ -8,7 +8,7 @@ A script for creating an RDS snapshot, sharing it with another AWS account, and 
 - Shares the snapshot with a target AWS account
 - Copies the snapshot to the target account
 - Uses AWS CLI profiles for authentication
-- Optional notifications via ntfy.sh for each completed step
+- Optional notifications via ntfy for each completed step
 - Tracks and reports execution time for each operation
 - Supports optional region overrides
 - Provides a dry run mode for testing
@@ -18,7 +18,7 @@ A script for creating an RDS snapshot, sharing it with another AWS account, and 
 - AWS CLI installed and configured with profiles for both source and target accounts
 - Bash shell environment
 - curl (for sending notifications, only if notification feature is used)
-- Internet connectivity (for ntfy.sh notifications, only if notification feature is used)
+- Internet connectivity (for ntfy notifications, only if notification feature is used)
 
 ## Configuration
 
@@ -35,7 +35,8 @@ SOURCE_KMS_KEY_ARN=arn:aws:kms:...      # KMS key ARN for encryption
 SOURCE_RDS_INSTANCE=my-database         # RDS instance identifier to snapshot
 
 # Optional variables
-NTFY_TOPIC=my-notification-topic        # ntfy.sh topic for notifications (optional)
+NTFY_TOPIC=my-notification-topic        # ntfy topic for notifications (optional)
+NTFY_TOKEN=tk_...   # ntfy access token (keep .env gitignored)
 SOURCE_AWS_REGION=us-east-1             # Region for source account (defaults to profile)
 TARGET_AWS_REGION=us-west-2             # Region for target account (defaults to profile)
 ```
@@ -53,6 +54,7 @@ export SOURCE_RDS_INSTANCE=my-database
 
 # Optional variables
 export NTFY_TOPIC=my-notification-topic  # For notifications
+export NTFY_TOKEN="tk_..."   # ntfy access token
 export SOURCE_AWS_REGION=us-east-1       # Source region
 export TARGET_AWS_REGION=us-west-2       # Target region
 
@@ -172,6 +174,7 @@ SOURCE_KMS_KEY_ARN=your-kms-key-arn
 SOURCE_RDS_INSTANCE=your-rds-instance
 # Optional configuration
 # NTFY_TOPIC=your-ntfy-topic
+# NTFY_TOKEN=tk_...
 # SOURCE_AWS_REGION=us-east-1
 # TARGET_AWS_REGION=us-west-2
 EOL
@@ -247,7 +250,7 @@ crontab -e
 
 ## Notifications (Optional)
 
-The script can send notifications via ntfy.sh at the following points if the `NTFY_TOPIC` variable is set in your `.env` file:
+The script can send notifications via ntfy at the following points if the `NTFY_TOPIC` variable is set in your `.env` file:
 - After creating the snapshot
 - After identifying source and target account IDs
 - After sharing the snapshot
@@ -256,7 +259,7 @@ The script can send notifications via ntfy.sh at the following points if the `NT
 
 To enable notifications:
 1. Add `NTFY_TOPIC=your-topic-name` to your `.env` file
-2. Ensure you have internet connectivity to reach ntfy.sh
+2. Optionally set `NTFY_URL` (and `NTFY_TOKEN`, if that server requires auth) in `.env` to use a private ntfy server; otherwise notifications go to public `https://ntfy.sh`
 
 If `NTFY_TOPIC` is not set, the script will run without sending notifications.
 
@@ -274,7 +277,7 @@ Common issues:
    - Verify KMS key permissions
 
 3. **Network issues**:
-   - Check internet connectivity for ntfy.sh notifications
+   - Check internet connectivity for ntfy notifications
    - Ensure AWS endpoints are accessible
 
 ## Security Considerations

@@ -23,50 +23,55 @@ usage() {
     echo ""
     echo "Environment Variables:"
     echo "  NTFY_TOPIC          Topic for ntfy notifications (optional)"
+    echo "  NTFY_URL            ntfy server base URL, https only (default: https://ntfy.sh)"
+    echo "  NTFY_TOKEN          ntfy access token (Bearer), sent only to NTFY_URL"
     exit 1
 }
 
-# Function to check if curl or wget is available
-check_http_tool() {
-    if command -v curl >/dev/null 2>&1; then
-        echo "curl"
-    elif command -v wget >/dev/null 2>&1; then
-        echo "wget"
-    else
-        echo ""
+# Function to send notification via ntfy
+# ntfy publish helper.
+#   NTFY_TOPIC  topic to publish to (unset = notifications skipped)
+#   NTFY_URL    server base URL, https only (unset = public https://ntfy.sh)
+#   NTFY_TOKEN  access token for NTFY_URL, sent as "Authorization: Bearer <token>".
+#               Only ever sent to NTFY_URL - never to the public ntfy.sh fallback.
+# Usage: ntfy_publish <title> <message> [priority]
+ntfy_publish() {
+    local title="$1" message="$2" priority="${3:-default}"
+    [ -n "${NTFY_TOPIC:-}" ] || return 0
+    local base="${NTFY_URL:-https://ntfy.sh}" token=""
+    case "$base" in
+        https://*) ;;
+        *) echo "ntfy: NTFY_URL must start with https:// - notification skipped" >&2; return 0 ;;
+    esac
+    if [ -n "${NTFY_URL:-}" ]; then
+        token="${NTFY_TOKEN:-}"
+    elif [ -n "${NTFY_TOKEN:-}" ]; then
+        echo "ntfy: NTFY_TOKEN is set but NTFY_URL is not - publishing to public ntfy.sh without the token" >&2
     fi
+    local url="${base%/}/${NTFY_TOPIC}"
+    # Custom User-Agent: some CDN bot filters reject default client agents
+    local ua="mobile247-scripts/1.0"
+    if command -v curl >/dev/null 2>&1; then
+        # Token goes in via a stdin config (-K -) so it never shows up in the process list
+        if [ -n "$token" ]; then
+            printf 'header = "Authorization: Bearer %s"\n' "$token"
+        fi | curl -fsS -o /dev/null -K - -A "$ua" \
+            -H "Title: ${title}" -H "Priority: ${priority}" -d "$message" "$url" \
+            || echo "ntfy: publish to topic '${NTFY_TOPIC}' failed" >&2
+    elif command -v wget >/dev/null 2>&1; then
+        local wget_args=(-q -O /dev/null -U "$ua" --header="Title: ${title}" --header="Priority: ${priority}" --post-data="$message")
+        if [ -n "$token" ]; then
+            wget_args+=(--header="Authorization: Bearer ${token}")
+        fi
+        wget "${wget_args[@]}" "$url" || echo "ntfy: publish to topic '${NTFY_TOPIC}' failed" >&2
+    else
+        echo "ntfy: neither curl nor wget found - notification skipped" >&2
+    fi
+    return 0
 }
 
-# Function to send notification via ntfy
 send_notification() {
-    local message="$1"
-    
-    # Skip if no NTFY_TOPIC is set
-    [[ -z "${NTFY_TOPIC:-}" ]] && return 0
-    
-    local http_tool
-    http_tool=$(check_http_tool)
-    
-    if [[ -z "$http_tool" ]]; then
-        echo "Neither curl nor wget available, cannot send notification"
-        return 1
-    fi
-    
-    local ntfy_url="https://ntfy.sh/${NTFY_TOPIC}"
-    
-    if [[ "$http_tool" == "curl" ]]; then
-        if curl -s -d "$message" "$ntfy_url" >/dev/null 2>&1; then
-            echo "Notification sent to $NTFY_TOPIC"
-        else
-            echo "Failed to send notification via curl"
-        fi
-    else
-        if wget -q -O- --post-data="$message" "$ntfy_url" >/dev/null 2>&1; then
-            echo "Notification sent to $NTFY_TOPIC"
-        else
-            echo "Failed to send notification via wget"
-        fi
-    fi
+    ntfy_publish "start-instance" "$1"
 }
 
 # Function to get current instance state

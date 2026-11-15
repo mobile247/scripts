@@ -39,6 +39,8 @@ Rotate an SSH public key for a user across one or more remote hosts. Removes the
 | Variable | Description |
 |----------|-------------|
 | `NTFY_TOPIC` | If set, sends a notification on completion or failure |
+| `NTFY_URL` | Optional. ntfy server base URL, `https://` only (default: public `https://ntfy.sh`). Set it in the gitignored `.env` for a private server |
+| `NTFY_TOKEN` | Optional. ntfy access token, sent as `Authorization: Bearer`, and only to `NTFY_URL` (never to the public ntfy.sh fallback). Keep it in the gitignored `.env` |
 
 Loaded from `.env` in the current working directory if present, otherwise read from the environment.
 

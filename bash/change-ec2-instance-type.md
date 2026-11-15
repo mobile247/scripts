@@ -12,7 +12,7 @@ This script automates the process of changing an EC2 instance type by stopping t
 - Support for custom AWS regions
 - Detailed error handling
 - Elapsed time tracking
-- Optional notifications via ntfy.sh
+- Optional notifications via ntfy
 
 ## Prerequisites
 
@@ -84,6 +84,7 @@ chmod +x change-ec2-instance-type.sh
 ### With Notifications
 ```bash
 export NTFY_TOPIC="your-notification-topic"
+export NTFY_TOKEN="tk_..."   # ntfy access token
 ./change-ec2-instance-type.sh \
   --instance-id i-1234567890abcdef0 \
   --instance-type t3.medium
@@ -106,7 +107,9 @@ export NTFY_TOPIC="your-notification-topic"
 - `-h`, `--help`: Display help message
 
 ### Environment Variables
-- `NTFY_TOPIC`: Optional ntfy.sh topic for notifications (default: disabled)
+- `NTFY_TOPIC`: Optional ntfy topic for notifications (default: disabled)
+- `NTFY_URL`: ntfy server base URL, `https://` only (default: public `https://ntfy.sh`). Set it in the gitignored `.env` for a private server
+- `NTFY_TOKEN`: ntfy access token (optional), sent as `Authorization: Bearer`, and only to `NTFY_URL` (never to the public ntfy.sh fallback). Keep it in the gitignored `.env`
 
 ## Common Instance Types
 

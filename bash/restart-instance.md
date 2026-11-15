@@ -37,7 +37,9 @@ Stop and start an EC2 instance by its `Name` tag. If multiple instances share th
 
 | Variable | Description |
 |----------|-------------|
-| `NTFY_TOPIC` | Optional. Send result notification via ntfy.sh |
+| `NTFY_TOPIC` | Optional. Send result notification via ntfy |
+| `NTFY_URL` | Optional. ntfy server base URL, `https://` only (default: public `https://ntfy.sh`). Set it in the gitignored `.env` for a private server |
+| `NTFY_TOKEN` | Optional. ntfy access token, sent as `Authorization: Bearer`, and only to `NTFY_URL` (never to the public ntfy.sh fallback). Keep it in the gitignored `.env` |
 
 ## Example
 

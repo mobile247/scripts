@@ -38,7 +38,7 @@ Each script has a matching `.md` file with the same base name covering prerequis
 - `change-ec2-instance-type.sh`: also requires `jq`
 - `epub-splitter.py`: Python 3 + `pip install -r python/epub-splitter.requirements.txt`
 - `freeze-pyenv-packages.zsh`: `zsh` and pyenv
-- Notifications (optional): `curl` or `wget` + `NTFY_TOPIC`
+- Notifications (optional): `curl` or `wget` + `NTFY_TOPIC`. Default server is public `https://ntfy.sh`; set `NTFY_URL` (HTTPS only) and optionally `NTFY_TOKEN` (Bearer, sent only to `NTFY_URL`) for a private server
 
 ## Configuration
 

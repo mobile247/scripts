@@ -28,7 +28,9 @@ No arguments.
 
 | Variable | Description |
 |----------|-------------|
-| `NTFY_TOPIC` | Optional. Send result notification via ntfy.sh |
+| `NTFY_TOPIC` | Optional. Send result notification via ntfy |
+| `NTFY_URL` | Optional. ntfy server base URL, `https://` only (default: public `https://ntfy.sh`). Set it in the gitignored `.env` for a private server |
+| `NTFY_TOKEN` | Optional. ntfy access token, sent as `Authorization: Bearer`, and only to `NTFY_URL` (never to the public ntfy.sh fallback). Keep it in the gitignored `.env` |
 
 Loaded from `.env` in the current working directory if present, otherwise read from the environment. If `NTFY_TOPIC` is set in neither, the script runs normally and sends no notification.
 
@@ -84,18 +86,19 @@ Sends ntfy notification if `NTFY_TOPIC` is set.
 
 ## Scheduling
 
-Non-interactive, so it can run from cron or launchd. Neither sources `~/.zshrc`, and the working directory is not the script's folder (cron uses `$HOME`, launchd uses `/`). A scheduled run therefore sends no notification unless `NTFY_TOPIC` is provided by the scheduler or a `.env` exists in the working directory.
+Non-interactive, so it can run from cron or launchd. Neither sources `~/.zshrc`, and the working directory is not the script's folder (cron uses `$HOME`, launchd uses `/`). A scheduled run therefore sends no notification unless `NTFY_TOPIC` (plus `NTFY_URL`/`NTFY_TOKEN` for a private server) is provided by the scheduler or a `.env` exists in the working directory.
 
 **cron** — daily at 12:00:
 
 ```bash
 NTFY_TOPIC=your-topic
+NTFY_TOKEN=tk_...   # ntfy access token (keep .env gitignored)
 0 12 * * * /bin/zsh /path/to/freeze-pyenv-packages.zsh >> /tmp/pyenv-packages.log 2>&1
 ```
 
 Or `cd` into a folder containing `.env` first: `0 12 * * * cd /path/with/env && /bin/zsh /path/to/freeze-pyenv-packages.zsh ...`
 
-**launchd** — `~/Library/LaunchAgents/<label>.plist` with `ProgramArguments` set to `/bin/zsh` and the script path, `StartCalendarInterval` (`Hour` 12, `Minute` 0), and `StandardOutPath` / `StandardErrorPath` for logs. Provide `NTFY_TOPIC` via an `EnvironmentVariables` dict, or set `WorkingDirectory` to a folder containing `.env`. Check the last exit code with `launchctl list | grep <label>`.
+**launchd** — `~/Library/LaunchAgents/<label>.plist` with `ProgramArguments` set to `/bin/zsh` and the script path, `StartCalendarInterval` (`Hour` 12, `Minute` 0), and `StandardOutPath` / `StandardErrorPath` for logs. Provide `NTFY_TOPIC`/`NTFY_TOKEN` via an `EnvironmentVariables` dict (or, better for the token, the `.env` route below), or set `WorkingDirectory` to a folder containing `.env`. Check the last exit code with `launchctl list | grep <label>`.
 
 ---
 

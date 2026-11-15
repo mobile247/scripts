@@ -52,6 +52,47 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# ntfy publish helper.
+#   NTFY_TOPIC  topic to publish to (unset = notifications skipped)
+#   NTFY_URL    server base URL, https only (unset = public https://ntfy.sh)
+#   NTFY_TOKEN  access token for NTFY_URL, sent as "Authorization: Bearer <token>".
+#               Only ever sent to NTFY_URL - never to the public ntfy.sh fallback.
+# Usage: ntfy_publish <title> <message> [priority]
+ntfy_publish() {
+    local title="$1" message="$2" priority="${3:-default}"
+    [ -n "${NTFY_TOPIC:-}" ] || return 0
+    local base="${NTFY_URL:-https://ntfy.sh}" token=""
+    case "$base" in
+        https://*) ;;
+        *) echo "ntfy: NTFY_URL must start with https:// - notification skipped" >&2; return 0 ;;
+    esac
+    if [ -n "${NTFY_URL:-}" ]; then
+        token="${NTFY_TOKEN:-}"
+    elif [ -n "${NTFY_TOKEN:-}" ]; then
+        echo "ntfy: NTFY_TOKEN is set but NTFY_URL is not - publishing to public ntfy.sh without the token" >&2
+    fi
+    local url="${base%/}/${NTFY_TOPIC}"
+    # Custom User-Agent: some CDN bot filters reject default client agents
+    local ua="mobile247-scripts/1.0"
+    if command -v curl >/dev/null 2>&1; then
+        # Token goes in via a stdin config (-K -) so it never shows up in the process list
+        if [ -n "$token" ]; then
+            printf 'header = "Authorization: Bearer %s"\n' "$token"
+        fi | curl -fsS -o /dev/null -K - -A "$ua" \
+            -H "Title: ${title}" -H "Priority: ${priority}" -d "$message" "$url" \
+            || echo "ntfy: publish to topic '${NTFY_TOPIC}' failed" >&2
+    elif command -v wget >/dev/null 2>&1; then
+        local wget_args=(-q -O /dev/null -U "$ua" --header="Title: ${title}" --header="Priority: ${priority}" --post-data="$message")
+        if [ -n "$token" ]; then
+            wget_args+=(--header="Authorization: Bearer ${token}")
+        fi
+        wget "${wget_args[@]}" "$url" || echo "ntfy: publish to topic '${NTFY_TOPIC}' failed" >&2
+    else
+        echo "ntfy: neither curl nor wget found - notification skipped" >&2
+    fi
+    return 0
+}
+
 # Function to execute or simulate a command based on dry-run flag
 function run_cmd {
   if $DRY_RUN; then
@@ -162,11 +203,9 @@ if [ -n "${NTFY_TOPIC}" ]; then
     NOTIFICATION_MSG="Docker cleanup DRY RUN completed in ${ELAPSED_FORMATTED}"
   fi
   
-  # Check if curl is available, otherwise try wget - fail silently if neither exists
-  if command -v curl &> /dev/null; then
-    run_cmd "curl -s -d \"${NOTIFICATION_MSG}\" \"https://ntfy.sh/${NTFY_TOPIC}\""
-  elif command -v wget &> /dev/null; then
-    run_cmd "wget -q --post-data=\"${NOTIFICATION_MSG}\" \"https://ntfy.sh/${NTFY_TOPIC}\" -O /dev/null"
+  if $DRY_RUN; then
+    echo -e "${YELLOW}[DRY RUN] Would send notification: ${NC}${NOTIFICATION_MSG}"
+  else
+    ntfy_publish "clear-docker" "$NOTIFICATION_MSG"
   fi
-  # Silently fail if neither curl nor wget is available
 fi
